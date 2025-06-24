@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>iPhone Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: white;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 375px;
+      padding: 20px;
+      background-color: #000;
+    }
+
+    .display {
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 0 20px 20px 20px;
+      font-size: 80px;
+      font-weight: 300;
+      line-height: 1;
+      overflow: hidden;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 0 12px;
+    }
+
+    .button {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      font-size: 32px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: filter 0.1s ease;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .button:active {
+      filter: brightness(1.3);
+    }
+
+    .button.number {
+      background-color: #333333;
+      color: white;
+    }
+
+    .button.operator {
+      background-color: #ff9500;
+      color: white;
+    }
+
+    .button.operator.active {
+      background-color: white;
+      color: #ff9500;
+    }
+
+    .button.function {
+      background-color: #a5a5a5;
+      color: black;
+    }
+
+    .button.equals {
+      background-color: #ff9500;
+      color: white;
+    }
+
+    .button.zero {
+      width: 172px;
+      border-radius: 40px;
+      justify-content: flex-start;
+      padding-left: 32px;
+      grid-column: span 2;
+    }
+
+    @media (max-width: 400px) {
+      .calculator {
+        padding: 10px;
+      }
+      
+      .button {
+        width: 70px;
+        height: 70px;
+        font-size: 28px;
+      }
+      
+      .button.zero {
+        width: 152px;
+      }
+      
+      .display {
+        font-size: 70px;
+        height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+      <button class="button function" onclick="clearDisplay()">AC</button>
+      <button class="button function" onclick="toggleSign()">±</button>
+      <button class="button function" onclick="calculatePercentage()">%</button>
+      <button class="button operator" onclick="setOperator('÷')">÷</button>
+
+      <button class="button number" onclick="appendNumber('7')">7</button>
+      <button class="button number" onclick="appendNumber('8')">8</button>
+      <button class="button number" onclick="appendNumber('9')">9</button>
+      <button class="button operator" onclick="setOperator('×')">×</button>
+
+      <button class="button number" onclick="appendNumber('4')">4</button>
+      <button class="button number" onclick="appendNumber('5')">5</button>
+      <button class="button number" onclick="appendNumber('6')">6</button>
+      <button class="button operator" onclick="setOperator('-')">−</button>
+
+      <button class="button number" onclick="appendNumber('1')">1</button>
+      <button class="button number" onclick="appendNumber('2')">2</button>
+      <button class="button number" onclick="appendNumber('3')">3</button>
+      <button class="button operator" onclick="setOperator('+')">+</button>
+
+      <button class="button number zero" onclick="appendNumber('0')">0</button>
+      <button class="button number" onclick="appendDecimal()">.</button>
+      <button class="button equals" onclick="calculateResult()">=</button>
+    </div>
+  </div>
+
+  <script>
+    let currentInput = '0';
+    let previousInput = '';
+    let currentOperator = null;
+    let shouldResetInput = false;
+    let isNewCalculation = true;
+    let displayExpression = '0';
+
+    const display = document.getElementById('display');
+
+    function updateDisplay() {
+      display.textContent = displayExpression;
+    }
+
+    function clearDisplay() {
+      currentInput = '0';
+      previousInput = '';
+      currentOperator = null;
+      shouldResetInput = false;
+      isNewCalculation = true;
+      displayExpression = '0';
+      updateDisplay();
+      updateButtonStates();
+    }
+
+    function appendNumber(num) {
+      if (currentInput === '0' || shouldResetInput) {
+        currentInput = num;
+        shouldResetInput = false;
+        if (isNewCalculation) {
+          displayExpression = num;
+        } else {
+          displayExpression += num;
+        }
+      } else {
+        currentInput += num;
+        displayExpression += num;
+      }
+      isNewCalculation = false;
+      updateDisplay();
+    }
+
+    function appendDecimal() {
+      if (shouldResetInput) {
+        currentInput = '0.';
+        shouldResetInput = false;
+        if (isNewCalculation) {
+          displayExpression = '0.';
+        } else {
+          displayExpression += '0.';
+        }
+      } else if (!currentInput.includes('.')) {
+        currentInput += '.';
+        displayExpression += '.';
+      }
+      isNewCalculation = false;
+      updateDisplay();
+    }
+
+    function setOperator(operator) {
+      if (currentOperator && !shouldResetInput) {
+        calculateResult();
+      }
+      previousInput = currentInput;
+      currentOperator = operator;
+      shouldResetInput = true;
+      
+      // Update display expression with operator
+      if (isNewCalculation) {
+        displayExpression = currentInput + ' ' + operator + ' ';
+      } else {
+        // Replace the last operator if one exists, otherwise append
+        const lastChar = displayExpression.slice(-1);
+        if (['+', '−', '×', '÷'].includes(lastChar)) {
+          displayExpression = displayExpression.slice(0, -1) + operator + ' ';
+        } else {
+          displayExpression += ' ' + operator + ' ';
+        }
+      }
+      
+      updateDisplay();
+      updateButtonStates();
+    }
+
+    function calculateResult() {
+      if (!currentOperator || shouldResetInput) return;
+
+      const prev = parseFloat(previousInput);
+      const curr = parseFloat(currentInput);
+
+      if (isNaN(prev) || isNaN(curr)) return;
+
+      let result;
+      switch (currentOperator) {
+        case '+': result = prev + curr; break;
+        case '−': result = prev - curr; break;
+        case '×': result = prev * curr; break;
+        case '÷':
+          if (curr === 0) {
+            alert("Cannot divide by zero");
+            clearDisplay();
+            return;
+          }
+          result = prev / curr;
+          break;
+        default:
+          return;
+      }
+
+      currentInput = result.toString();
+      currentOperator = null;
+      shouldResetInput = true;
+      isNewCalculation = true;
+      displayExpression = result.toString();
+      updateDisplay();
+      updateButtonStates();
+    }
+
+    function toggleSign() {
+      if (currentInput !== '0') {
+        currentInput = currentInput.startsWith('-') ? currentInput.substring(1) : '-' + currentInput;
+        
+        // Update display expression
+        if (isNewCalculation) {
+          displayExpression = currentInput;
+        } else {
+          // Find the last number in the expression and update its sign
+          const parts = displayExpression.split(' ');
+          if (parts.length >= 2) {
+            const lastNumber = parts[parts.length - 2];
+            const newLastNumber = lastNumber.startsWith('-') ? lastNumber.substring(1) : '-' + lastNumber;
+            parts[parts.length - 2] = newLastNumber;
+            displayExpression = parts.join(' ');
+          }
+        }
+        
+        updateDisplay();
+      }
+    }
+
+    function calculatePercentage() {
+      const value = parseFloat(currentInput);
+      if (!isNaN(value)) {
+        currentInput = (value / 100).toString();
+        
+        // Update display expression
+        if (isNewCalculation) {
+          displayExpression = currentInput;
+        } else {
+          // Find the last number in the expression and update it
+          const parts = displayExpression.split(' ');
+          if (parts.length >= 2) {
+            parts[parts.length - 2] = currentInput;
+            displayExpression = parts.join(' ');
+          }
+        }
+        
+        updateDisplay();
+      }
+    }
+
+    function updateButtonStates() {
+      const operatorButtons = document.querySelectorAll('.operator');
+      operatorButtons.forEach(button => {
+        button.classList.remove('active');
+      });
+      
+      if (currentOperator) {
+        const activeButton = Array.from(operatorButtons).find(button => 
+          button.textContent === currentOperator
+        );
+        if (activeButton) {
+          activeButton.classList.add('active');
+        }
+      }
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
